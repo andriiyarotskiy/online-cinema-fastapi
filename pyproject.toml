@@ -1,0 +1,27 @@
+[tool.fastapi]
+entrypoint = "src.main:app"
+[project]
+name = "online-cinema-fastapi"
+version = "0.1.0"
+description = "Online cinema back-end"
+authors = [
+    {name = "Andrii Yarotskiy",email = "andriiyarotskiy@gmail.com"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "fastapi[standard] (>=0.135.3,<0.136.0)",
+    "sqlalchemy (>=2.0.49,<3.0.0)",
+    "alembic (>=1.18.4,<2.0.0)",
+    "asyncpg (>=0.31.0,<0.32.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "black (>=26.3.1,<27.0.0)"
+]
