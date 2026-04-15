@@ -42,7 +42,7 @@ services:
       - .env
     environment:
       - LOG_LEVEL=debug
-      - PYTHONPATH=/usr/src/fastapi
+      - PYTHONPATH=/app/src/cinema
       - WATCHFILES_FORCE_POLLING=true
     ports:
       - "8000:8000"
@@ -50,7 +50,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./src:/usr/src/fastapi
+      - ./src:/app/src/cinema
     networks:
       - cinema_network
 

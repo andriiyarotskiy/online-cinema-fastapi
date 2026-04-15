@@ -4,7 +4,7 @@ FROM python:3.11
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=off
-ENV ALEMBIC_CONFIG=/usr/src/alembic/alembic.ini
+ENV ALEMBIC_CONFIG=/app/src/alembic/alembic.ini
 
 # Installing dependencies
 RUN apt update && apt install -y \
@@ -18,21 +18,21 @@ RUN python -m pip install --upgrade pip && \
     pip install poetry
 
 # Copy dependency files
-COPY ./poetry.lock /usr/src/poetry/poetry.lock
-COPY ./pyproject.toml /usr/src/poetry/pyproject.toml
-COPY ./alembic.ini /usr/src/alembic/alembic.ini
+COPY ./poetry.lock /app/src/poetry/poetry.lock
+COPY ./pyproject.toml /app/src/poetry/pyproject.toml
+COPY ./alembic.ini /app/src/alembic/alembic.ini
 
 # Configure Poetry to avoid creating a virtual environment
 RUN poetry config virtualenvs.create false
 
 # Selecting a working directory
-WORKDIR /usr/src/poetry
+WORKDIR /app/src/poetry
 
 # Install dependencies with Poetry
 RUN poetry install --no-root --only main
 
 # Selecting a working directory
-WORKDIR /usr/src/fastapi
+WORKDIR /app/src/cinema
 
 # Copy the source code
 COPY ./src .
