@@ -71,6 +71,50 @@ services:
     networks:
       - cinema_network
 
+  redis:
+    image: redis:7
+    container_name: redis_cinema
+    ports:
+      - "6379:6379"
+    networks:
+      - cinema_network
+
+  celery_worker:
+    build: .
+    container_name: celery_worker_cinema
+    command: celery -A celery_service.celery_config.celery_instance worker --loglevel=INFO
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/src/cinema
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src/cinema
+    networks:
+      - cinema_network
+
+  celery_beat:
+    build: .
+    container_name: celery_beat_cinema
+    command: celery -A celery_service.celery_config.celery_instance beat --loglevel=INFO
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/src/cinema
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src/cinema
+    networks:
+      - cinema_network
+
 volumes:
   online_cinema_data:
     driver: local

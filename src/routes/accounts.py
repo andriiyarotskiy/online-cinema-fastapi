@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import cast
 
 from fastapi import APIRouter, status, Depends, HTTPException
@@ -120,7 +120,10 @@ async def register_user(
         db.add(new_user)
         await db.flush()
 
-        activation_token = ActivationTokenModel(user_id=new_user.id)
+        activation_token = ActivationTokenModel(
+            user_id=new_user.id,
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+        )
         db.add(activation_token)
         await db.commit()
         await db.refresh(new_user)
