@@ -25,11 +25,16 @@ class BaseAppSettings(BaseSettings):
     REDIS_BROKER_URL: str = os.getenv("REDIS_BROKER_URL", "redis://localhost:6379/0")
     REDIS_BACKEND_URL: str = os.getenv("REDIS_BACKEND_URL", "redis://localhost:6379/1")
 
-    # S3_STORAGE_HOST: str = os.getenv("MINIO_HOST", "minio-theater")
-    # S3_STORAGE_PORT: int = os.getenv("MINIO_PORT", 9000)
-    # S3_STORAGE_ACCESS_KEY: str = os.getenv("MINIO_ROOT_USER", "minioadmin")
-    # S3_STORAGE_SECRET_KEY: str = os.getenv("MINIO_ROOT_PASSWORD", "some_password")
-    # S3_BUCKET_NAME: str = os.getenv("MINIO_STORAGE", "theater-storage")
+    S3_STORAGE_URL: str = os.getenv("MINIO_URL", "http://minio-cinema:9000")
+    S3_STORAGE_ACCESS_KEY: str = os.getenv("MINIO_ROOT_USER", "minio_admin")
+    S3_STORAGE_SECRET_KEY: str = os.getenv("MINIO_ROOT_PASSWORD", "password")
+    S3_BUCKET_NAME: str = os.getenv("MINIO_STORAGE", "storage")
+
+    AWS_REGION: str = os.getenv("AWS_REGION", "eu-south-2")
+
+    @property
+    def S3_STORAGE_ENDPOINT(self) -> str:
+        return self.S3_STORAGE_URL
 
 
 class Settings(BaseAppSettings):

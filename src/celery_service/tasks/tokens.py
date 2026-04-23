@@ -4,7 +4,7 @@ from sqlalchemy import delete
 from celery import shared_task
 
 from database import ActivationTokenModel
-from database.session_postgresql import SyncSessionLocal
+from database import SyncSessionLocal
 
 
 @shared_task

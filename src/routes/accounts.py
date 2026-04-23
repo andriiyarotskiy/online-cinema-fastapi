@@ -124,34 +124,27 @@ async def register_user(
             )
             db.add(user)
             await db.flush()
-        if not user.activation_token:
-            activation_token = ActivationTokenModel(
-                user_id=user.id,
-                expires_at=datetime.now(timezone.utc) + timedelta(seconds=30),
-            )
-            db.add(activation_token)
         else:
             activation_token = user.activation_token
-            now = datetime.now(timezone.utc)
-            expires_at = activation_token.expires_at.replace(tzinfo=timezone.utc)
-            if now < expires_at:
-                raise HTTPException(
-                    status_code=409,
-                    detail=(
-                        "You already have an active activation link. "
-                        f"You can request a new one after "
-                        f"{expires_at.strftime('%d %b %Y, %I:%M%:%S %p')} UTC."
-                    ),
-                )
-
-            await db.delete(activation_token)
-            await db.flush()
-
-            activation_token = ActivationTokenModel(
-                user_id=user.id,
-                expires_at=datetime.now(timezone.utc) + timedelta(seconds=30),
-            )
-            db.add(activation_token)
+            if activation_token:
+                now = datetime.now(timezone.utc)
+                expires_at = activation_token.expires_at.replace(tzinfo=timezone.utc)
+                if now < expires_at:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            "You already have an active activation link. "
+                            f"You can request a new one after "
+                            f"{expires_at.strftime('%d %b %Y, %I:%M%:%S %p')} UTC."
+                        ),
+                    )
+                await db.delete(activation_token)
+                await db.flush()
+        activation_token = ActivationTokenModel(
+            user_id=user.id,
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=30),
+        )
+        db.add(activation_token)
 
         await db.commit()
         await db.refresh(user)

@@ -1,8 +1,7 @@
 from typing import AsyncGenerator, Annotated
 
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import mapped_column, sessionmaker
+from sqlalchemy.orm import mapped_column
 
 from config import get_settings
 
@@ -18,17 +17,6 @@ postgresql_engine = create_async_engine(POSTGRESQL_DATABASE_URL, echo=False)
 AsyncPostgresqlSessionLocal = async_sessionmaker(
     bind=postgresql_engine,
     class_=AsyncSession,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False,
-)
-
-sync_database_url = POSTGRESQL_DATABASE_URL.replace(
-    "postgresql+asyncpg", "postgresql+psycopg2"
-)
-sync_postgresql_engine = create_engine(sync_database_url, echo=False)
-SyncSessionLocal = sessionmaker(
-    bind=sync_postgresql_engine,
     autocommit=False,
     autoflush=False,
     expire_on_commit=False,
