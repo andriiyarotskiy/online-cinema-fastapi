@@ -17,7 +17,7 @@ celery_instance.conf.update(
     beat_schedule={
         "delete-expired-tokens-every-10-min": {
             "task": "celery_service.tasks.tokens.delete_expired_tokens",
-            "schedule": 300,
+            "schedule": 3600,
             # "schedule": crontab(hour=21),
         }
     },

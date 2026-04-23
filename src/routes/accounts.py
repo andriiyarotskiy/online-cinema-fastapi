@@ -94,10 +94,14 @@ async def register_user(
             - 409 Conflict if a user with the same email exists.
             - 500 Internal Server Error if an error occurs during user creation.
     """
-    stmt = select(UserModel).where(UserModel.email == user_data.email)
+    stmt = (
+        select(UserModel)
+        .options(joinedload(UserModel.activation_token))
+        .where(UserModel.email == user_data.email)
+    )
     result = await db.execute(stmt)
-    existing_user = result.scalars().first()
-    if existing_user:
+    user = result.scalars().first()
+    if user and user.is_active:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"A user with this email {user_data.email} already exists.",
@@ -112,21 +116,45 @@ async def register_user(
             detail="Default user group not found.",
         )
     try:
-        new_user = UserModel.create(
-            email=str(user_data.email),
-            raw_password=user_data.password,
-            group_id=user_group.id,
-        )
-        db.add(new_user)
-        await db.flush()
+        if not user:
+            user = UserModel.create(
+                email=str(user_data.email),
+                raw_password=user_data.password,
+                group_id=user_group.id,
+            )
+            db.add(user)
+            await db.flush()
+        if not user.activation_token:
+            activation_token = ActivationTokenModel(
+                user_id=user.id,
+                expires_at=datetime.now(timezone.utc) + timedelta(seconds=30),
+            )
+            db.add(activation_token)
+        else:
+            activation_token = user.activation_token
+            now = datetime.now(timezone.utc)
+            expires_at = activation_token.expires_at.replace(tzinfo=timezone.utc)
+            if now < expires_at:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "You already have an active activation link. "
+                        f"You can request a new one after "
+                        f"{expires_at.strftime('%d %b %Y, %I:%M%:%S %p')} UTC."
+                    ),
+                )
 
-        activation_token = ActivationTokenModel(
-            user_id=new_user.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
-        )
-        db.add(activation_token)
+            await db.delete(activation_token)
+            await db.flush()
+
+            activation_token = ActivationTokenModel(
+                user_id=user.id,
+                expires_at=datetime.now(timezone.utc) + timedelta(seconds=30),
+            )
+            db.add(activation_token)
+
         await db.commit()
-        await db.refresh(new_user)
+        await db.refresh(user)
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(
@@ -138,9 +166,9 @@ async def register_user(
             f"http://127.0.0.1/accounts/activate/?token={activation_token.token}"
         )
 
-        await email_sender.send_activation_email(new_user.email, activation_link)
+        await email_sender.send_activation_email(user.email, activation_link)
 
-        return UserRegistrationResponseSchema.model_validate(new_user)
+        return UserRegistrationResponseSchema.model_validate(user)
 
 
 @router.post(
