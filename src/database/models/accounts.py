@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import enum
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import (
@@ -10,8 +12,6 @@ from sqlalchemy import (
     DateTime,
     func,
     ForeignKey,
-    Date,
-    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
@@ -21,16 +21,14 @@ from database.validators import accounts as validators
 from security.passwords import hash_password, verify_password
 from security.utils import generate_secure_token
 
+if TYPE_CHECKING:
+    from database import UserProfileModel
+
 
 class UserGroupEnum(str, enum.Enum):
     USER = "user"
     MODERATOR = "moderator"
     ADMIN = "admin"
-
-
-class GenderEnum(str, enum.Enum):
-    MAN = "man"
-    WOMAN = "woman"
 
 
 class UserGroupModel(Base):
@@ -120,33 +118,6 @@ class UserModel(Base):
     def __repr__(self) -> str:
         return (
             f"<UserModel(id={self.id}, email={self.email}), is_active={self.is_active}>"
-        )
-
-
-class UserProfileModel(Base):
-    __tablename__ = "user_profiles"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    avatar: Mapped[Optional[str]] = mapped_column(nullable=True)
-    gender: Mapped[Optional[GenderEnum]] = mapped_column(
-        Enum(GenderEnum), nullable=True
-    )
-    date_of_birth: Mapped[Optional[datetime.date]] = mapped_column(Date, nullable=True)
-    info: Mapped[Optional[str]] = mapped_column(Text)
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), unique=True
-    )
-
-    user: Mapped["UserModel"] = relationship(back_populates="profile")
-
-    def __repr__(self) -> str:
-        return (
-            f"<UserProfileModel(id={self.id}, "
-            f"first_name={self.first_name} "
-            f"last_name={self.last_name})>"
         )
 
 
