@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Literal, Sequence
 
 from fastapi import Query, HTTPException, status
-from sqlalchemy import select, or_, func, case
+from sqlalchemy import select, or_, func, case, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, with_expression
 
@@ -221,3 +221,23 @@ async def _resolve_related_entities(
     if len(directors) != len(set(director_ids)):
         raise HTTPException(status_code=404, detail="One or more directors not found.")
     return genres, stars, directors
+
+
+async def check_movie_uniqueness(movie, payload, db) -> bool:
+    if any(field in payload for field in ("name", "year", "time")):
+        new_name = payload.get("name", movie.name)
+        new_year = payload.get("year", movie.year)
+        new_time = payload.get("time", movie.time)
+
+        conflict = await db.scalar(
+            select(MovieModel.id).where(
+                and_(
+                    MovieModel.name == new_name,
+                    MovieModel.year == new_year,
+                    MovieModel.time == new_time,
+                    MovieModel.id != movie.id,
+                )
+            )
+        )
+        return conflict
+    return False

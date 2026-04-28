@@ -40,6 +40,7 @@ from services.movies import (
     _apply_catalog_filters,
     _movie_base_stmt,
     _paginate_movies,
+    check_movie_uniqueness,
 )
 
 router = APIRouter()
@@ -83,7 +84,8 @@ async def create_movie(
     new_movie.stars = stars
     new_movie.directors = directors
     db.add(new_movie)
-    await commit_or_500(db, new_movie, attribute_names=["genres", "stars", "directors"])
+    await commit_or_500(db)
+    new_movie = await _get_movie_or_404(db, new_movie.id)
 
     return MovieDetailResponseSchema.model_validate(new_movie)
 
@@ -127,6 +129,12 @@ async def update_movie(
     movie = await _get_movie_or_404(db, movie_id)
 
     payload = movie_data.model_dump(exclude_unset=True)
+
+    # Uniqueness check if it changes name/year/time
+    conflict = await check_movie_uniqueness(movie, payload, db)
+    if conflict:
+        raise HTTPException(status_code=409, detail="Movie already exists.")
+
     if "certification_id" in payload:
         cert = await db.scalar(
             select(CertificationModel).where(
@@ -135,25 +143,6 @@ async def update_movie(
         )
         if not cert:
             raise HTTPException(status_code=404, detail="Certification not found.")
-
-    movie_name = movie_data.name or movie.name
-    movie_year = movie_data.year or movie.year
-    movie_time = movie_data.time or movie.time
-
-    exists = await db.scalar(
-        select(MovieModel).where(
-            and_(
-                MovieModel.name == movie_name,
-                MovieModel.year == movie_year,
-                MovieModel.time == movie_time,
-            )
-        )
-    )
-
-    if exists:
-        raise HTTPException(
-            status_code=409, detail="Movie with this name|year|time already exists."
-        )
 
     genre_ids = payload.pop("genre_ids", None)
     star_ids = payload.pop("star_ids", None)
@@ -173,7 +162,8 @@ async def update_movie(
         movie.stars = stars
         movie.directors = directors
 
-    await commit_or_500(db, movie)
+    await commit_or_500(db)
+    movie = await _get_movie_or_404(db, movie_id)
     return MovieDetailResponseSchema.model_validate(movie)
 
 

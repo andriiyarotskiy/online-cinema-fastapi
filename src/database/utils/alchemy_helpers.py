@@ -15,6 +15,7 @@ async def commit_or_500(
         return instance
     except SQLAlchemyError as e:
         await db.rollback()
+        print(str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error occurred.",
