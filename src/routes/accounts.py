@@ -140,10 +140,7 @@ async def register_user(
                     )
                 await db.delete(activation_token)
                 await db.flush()
-        activation_token = ActivationTokenModel(
-            user_id=user.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=30),
-        )
+        activation_token = ActivationTokenModel(user_id=user.id)
         db.add(activation_token)
 
         await db.commit()

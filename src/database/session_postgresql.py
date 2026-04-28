@@ -1,5 +1,6 @@
 from typing import AsyncGenerator, Annotated
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import mapped_column
 
@@ -39,3 +40,5 @@ async def get_postgresql_db() -> AsyncGenerator[AsyncSession, None]:
 int_pk = Annotated[int, mapped_column(primary_key=True)]
 str_uniq = Annotated[str, mapped_column(unique=True, nullable=False)]
 str_null_true = Annotated[str, mapped_column(nullable=True)]
+
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_postgresql_db)]

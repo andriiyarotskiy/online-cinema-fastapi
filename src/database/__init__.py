@@ -3,6 +3,7 @@ from database.session_postgresql import (
     str_uniq,
     int_pk,
     str_null_true,
+    AsyncSessionDep,
 )
 from database.models.base import Base
 from database.validators import accounts as accounts_validators
@@ -23,6 +24,14 @@ from database.models.movies import (
     StarModel,
     DirectorModel,
     CertificationModel,
+    MovieVoteModel,
+    FavoriteMovieModel,
+    MovieRatingModel,
+    MoviePurchaseModel,
+    MovieCommentModel,
+    MovieCommentLikeModel,
+    MovieCommentNotificationTypeEnum,
+    MovieCommentNotificationModel,
     MovieModel,
 )
 

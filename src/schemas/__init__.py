@@ -10,3 +10,9 @@ from schemas.accounts import (
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
 )
+
+from schemas.movies import (
+    GenreRequestSchema,
+    GenreResponseSchema,
+    PositiveIntList,
+)

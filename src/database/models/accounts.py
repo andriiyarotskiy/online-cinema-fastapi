@@ -22,7 +22,16 @@ from security.passwords import hash_password, verify_password
 from security.utils import generate_secure_token
 
 if TYPE_CHECKING:
-    from database import UserProfileModel
+    from database import (
+        FavoriteMovieModel,
+        MovieCommentLikeModel,
+        MovieCommentModel,
+        MovieCommentNotificationModel,
+        MoviePurchaseModel,
+        MovieRatingModel,
+        MovieVoteModel,
+        UserProfileModel,
+    )
 
 
 class UserGroupEnum(str, enum.Enum):
@@ -75,6 +84,51 @@ class UserModel(Base):
 
     refresh_tokens: Mapped[List["RefreshTokenModel"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+    movie_votes: Mapped[List["MovieVoteModel"]] = relationship(
+        "MovieVoteModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    favorite_movies: Mapped[List["FavoriteMovieModel"]] = relationship(
+        "FavoriteMovieModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_ratings: Mapped[List["MovieRatingModel"]] = relationship(
+        "MovieRatingModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_purchases: Mapped[List["MoviePurchaseModel"]] = relationship(
+        "MoviePurchaseModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_comments: Mapped[List["MovieCommentModel"]] = relationship(
+        "MovieCommentModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_comment_likes: Mapped[List["MovieCommentLikeModel"]] = relationship(
+        "MovieCommentLikeModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    movie_comment_notifications: Mapped[List["MovieCommentNotificationModel"]] = (
+        relationship(
+            "MovieCommentNotificationModel",
+            foreign_keys="MovieCommentNotificationModel.recipient_user_id",
+            back_populates="user",
+            cascade="all, delete-orphan",
+        )
+    )
+    sent_movie_comment_notifications: Mapped[
+        List["MovieCommentNotificationModel"]
+    ] = relationship(
+        "MovieCommentNotificationModel",
+        foreign_keys="MovieCommentNotificationModel.sender_user_id",
+        back_populates="sender",
     )
 
     @classmethod

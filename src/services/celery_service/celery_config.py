@@ -11,12 +11,12 @@ celery_instance = Celery(
 )
 
 celery_instance.conf.update(
-    include=["celery_service.tasks.tokens"],
+    include=["services.celery_service.tasks.tokens"],
     timezone="UTC",
     enable_utc=True,
     beat_schedule={
         "delete-expired-tokens-every-10-min": {
-            "task": "celery_service.tasks.tokens.delete_expired_tokens",
+            "task": "services.celery_service.tasks.tokens.delete_expired_tokens",
             "schedule": 3600,
             # "schedule": crontab(hour=21),
         }
