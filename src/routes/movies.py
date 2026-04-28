@@ -204,15 +204,25 @@ async def vote_movie(
             MovieVoteModel.movie_id == movie_id, MovieVoteModel.user_id == user.id
         )
     )
-    if not vote:
+
+    message = "Movie vote saved successfully."
+    if vote and vote_data.is_liked is None:
+        await db.delete(vote)
+        message = "Movie vote deleted successfully."
+    elif not vote:
+        if vote_data.is_liked is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Vote not found to reset"
+            )
         vote = MovieVoteModel(
             movie_id=movie_id, user_id=user.id, is_liked=vote_data.is_liked
         )
         db.add(vote)
     else:
         vote.is_liked = vote_data.is_liked
+        message = "Movie vote updated successfully."
     await commit_or_500(db)
-    return MessageResponseSchema(message="Movie vote saved successfully.")
+    return MessageResponseSchema(message=message)
 
 
 @router.post("/movies/{movie_id}/rate/", response_model=MessageResponseSchema)

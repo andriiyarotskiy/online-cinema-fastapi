@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from typing import Literal, Sequence
 
 from fastapi import Query, HTTPException, status
-from sqlalchemy import select, or_, func
+from sqlalchemy import select, or_, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, with_expression
 
-from database import MovieModel, GenreModel, StarModel, DirectorModel
+from database import MovieModel, GenreModel, StarModel, DirectorModel, MovieVoteModel
 from schemas.movies import MovieListResponseSchema, MovieListItemResponseSchema
 
 per_page_default = 20
@@ -70,11 +70,22 @@ def get_catalog_query_params(
     )
 
 
+likes_expr = func.count(case((MovieVoteModel.is_liked == True, 1)))
+dislikes_expr = func.count(case((MovieVoteModel.is_liked == False, 1)))
+
+
 def _movie_base_stmt():
-    return select(MovieModel).options(
-        selectinload(MovieModel.genres),
-        selectinload(MovieModel.stars),
-        selectinload(MovieModel.directors),
+    return (
+        select(MovieModel)
+        .outerjoin(MovieModel.user_votes)
+        .options(
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.stars),
+            selectinload(MovieModel.directors),
+            with_expression(MovieModel.likes, likes_expr),
+            with_expression(MovieModel.dislikes, dislikes_expr),
+        )
+        .group_by(MovieModel.id)
     )
 
 

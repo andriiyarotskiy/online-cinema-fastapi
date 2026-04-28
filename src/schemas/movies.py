@@ -97,7 +97,9 @@ class MovieCreateSchema(MovieBase):
     star_ids: PositiveIntList = Field(default_factory=list)
     director_ids: PositiveIntList = Field(default_factory=list)
 
-    model_config = ConfigDict(json_schema_extra={"examples": [movie_create_schema_example]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [movie_create_schema_example]}
+    )
 
 
 class MovieUpdateSchema(BaseModel):
@@ -115,12 +117,15 @@ class MovieUpdateSchema(BaseModel):
     star_ids: Optional[PositiveIntList] = None
     director_ids: Optional[PositiveIntList] = None
 
-    model_config = ConfigDict(json_schema_extra={"examples": [movie_update_schema_example]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [movie_update_schema_example]}
+    )
 
 
 class MovieListItemResponseSchema(BaseModel):
     model_config = ConfigDict(
-        from_attributes=True, json_schema_extra={"examples": [movie_item_schema_example]}
+        from_attributes=True,
+        json_schema_extra={"examples": [movie_item_schema_example]},
     )
 
     id: int
@@ -134,10 +139,14 @@ class MovieListItemResponseSchema(BaseModel):
     gross: Optional[float] = None
     price: Decimal
 
+    likes: int = Field(default=0, ge=0)
+    dislikes: int = Field(default=0, ge=0)
+
 
 class MovieDetailResponseSchema(MovieListItemResponseSchema):
     model_config = ConfigDict(
-        from_attributes=True, json_schema_extra={"examples": [movie_detail_schema_example]}
+        from_attributes=True,
+        json_schema_extra={"examples": [movie_detail_schema_example]},
     )
 
     description: str
@@ -148,7 +157,9 @@ class MovieDetailResponseSchema(MovieListItemResponseSchema):
 
 
 class MovieListResponseSchema(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [movie_list_response_schema_example]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [movie_list_response_schema_example]}
+    )
 
     movies: list[MovieListItemResponseSchema]
     prev_page: Optional[str] = None
@@ -158,15 +169,19 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieVoteRequestSchema(BaseModel):
-    is_liked: bool
+    is_liked: bool | None = None
 
-    model_config = ConfigDict(json_schema_extra={"examples": [movie_vote_schema_example]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [movie_vote_schema_example]}
+    )
 
 
 class MovieRatingRequestSchema(BaseModel):
     rating: int = Field(..., ge=1, le=10)
 
-    model_config = ConfigDict(json_schema_extra={"examples": [movie_rating_schema_example]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [movie_rating_schema_example]}
+    )
 
 
 class MovieCommentCreateRequestSchema(BaseModel):
@@ -180,7 +195,8 @@ class MovieCommentCreateRequestSchema(BaseModel):
 
 class MovieCommentResponseSchema(BaseModel):
     model_config = ConfigDict(
-        from_attributes=True, json_schema_extra={"examples": [movie_comment_schema_example]}
+        from_attributes=True,
+        json_schema_extra={"examples": [movie_comment_schema_example]},
     )
 
     id: int
@@ -194,7 +210,8 @@ class MovieCommentResponseSchema(BaseModel):
 
 class MovieCommentNotificationResponseSchema(BaseModel):
     model_config = ConfigDict(
-        from_attributes=True, json_schema_extra={"examples": [movie_notification_schema_example]}
+        from_attributes=True,
+        json_schema_extra={"examples": [movie_notification_schema_example]},
     )
 
     id: int
@@ -208,7 +225,8 @@ class MovieCommentNotificationResponseSchema(BaseModel):
 
 class GenreWithCountResponseSchema(BaseModel):
     model_config = ConfigDict(
-        from_attributes=True, json_schema_extra={"examples": [genre_with_count_schema_example]}
+        from_attributes=True,
+        json_schema_extra={"examples": [genre_with_count_schema_example]},
     )
 
     id: int

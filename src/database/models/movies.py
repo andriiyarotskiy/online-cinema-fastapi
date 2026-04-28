@@ -24,7 +24,7 @@ from sqlalchemy import (
     UUID,
     func,
 )
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy.orm import Mapped, relationship, mapped_column, query_expression
 
 from database import Base, int_pk, str_uniq
 
@@ -356,6 +356,8 @@ class MovieModel(Base):
 
     id: Mapped[int_pk]
 
+    likes: Mapped[int] = query_expression()
+    dislikes: Mapped[int] = query_expression()
     user_votes: Mapped[List["MovieVoteModel"]] = relationship(
         "MovieVoteModel",
         back_populates="movie",
