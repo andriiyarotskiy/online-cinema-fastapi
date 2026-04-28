@@ -123,12 +123,12 @@ class UserModel(Base):
             cascade="all, delete-orphan",
         )
     )
-    sent_movie_comment_notifications: Mapped[
-        List["MovieCommentNotificationModel"]
-    ] = relationship(
-        "MovieCommentNotificationModel",
-        foreign_keys="MovieCommentNotificationModel.sender_user_id",
-        back_populates="sender",
+    sent_movie_comment_notifications: Mapped[List["MovieCommentNotificationModel"]] = (
+        relationship(
+            "MovieCommentNotificationModel",
+            foreign_keys="MovieCommentNotificationModel.sender_user_id",
+            back_populates="sender",
+        )
     )
 
     @classmethod
