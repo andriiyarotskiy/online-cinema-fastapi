@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from database.models import accounts  # noqa: F401
 from database.models.base import Base
 from database.session_postgresql import sync_postgresql_engine
 
