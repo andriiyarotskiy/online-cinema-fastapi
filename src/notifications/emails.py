@@ -23,6 +23,8 @@ class EmailSender(EmailSenderInterface):
         activation_complete_email_template_name: str,
         password_email_template_name: str,
         password_complete_email_template_name: str,
+        comment_reply_template_name: str,
+        comment_like_template_name: str,
     ):
         self._hostname = hostname
         self._port = port
@@ -37,6 +39,8 @@ class EmailSender(EmailSenderInterface):
         self._password_complete_email_template_name = (
             password_complete_email_template_name
         )
+        self._comment_reply_template_name = comment_reply_template_name
+        self._comment_like_template_name = comment_like_template_name
 
         self._env = Environment(loader=FileSystemLoader(template_dir))
 
@@ -127,3 +131,37 @@ class EmailSender(EmailSenderInterface):
         html_content = template.render(email=email, login_link=login_link)
         subject = "Your Password Has Been Successfully Reset"
         await self._send_email(email, subject, html_content)
+
+    async def send_comment_reply_email(
+        self,
+        recipient_email: str,
+        sender_email: str,
+        movie_id: int,
+        comment_id: int,
+    ) -> None:
+        template = self._env.get_template(self._comment_reply_template_name)
+        html_content = template.render(
+            recipient_email=recipient_email,
+            sender_email=sender_email,
+            movie_id=movie_id,
+            comment_id=comment_id,
+        )
+        subject = "Your comment received a reply"
+        await self._send_email(recipient_email, subject, html_content)
+
+    async def send_comment_like_email(
+        self,
+        recipient_email: str,
+        sender_email: str,
+        movie_name: str,
+        comment_content: str,
+    ) -> None:
+        template = self._env.get_template(self._comment_like_template_name)
+        html_content = template.render(
+            recipient_email=recipient_email,
+            sender_email=sender_email,
+            movie_name=movie_name,
+            comment_content=comment_content,
+        )
+        subject = "Your comment received a like"
+        await self._send_email(recipient_email, subject, html_content)

@@ -84,7 +84,7 @@ services:
   celery_worker:
     build: .
     container_name: celery_worker_cinema
-    command: celery -A celery_service.celery_config.celery_instance worker --loglevel=INFO
+    command: celery -A services.celery_service.celery_config.celery_instance worker --loglevel=INFO
     env_file:
       - .env
     environment:
@@ -102,7 +102,7 @@ services:
   celery_beat:
     build: .
     container_name: celery_beat_cinema
-    command: celery -A celery_service.celery_config.celery_instance beat --loglevel=INFO
+    command: celery -A services.celery_service.celery_config.celery_instance beat --loglevel=INFO
     env_file:
       - .env
     environment:

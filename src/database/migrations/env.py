@@ -1,12 +1,11 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
 from database.models import accounts  # noqa: F401
+from database.models import profiles  # noqa: F401
+from database.models import movies  # noqa: F401
 from database.models.base import Base
-from database.session_postgresql import sync_postgresql_engine
+from database.sync_session import sync_postgresql_engine
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
