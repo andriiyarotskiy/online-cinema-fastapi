@@ -26,6 +26,21 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="Online Cinema",
     description="Modern and user-friendly API for Online Cinema project",
+    version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "accounts",
+            "description": "Authentication, account lifecycle and roles.",
+        },
+        {"name": "profiles", "description": "User profile creation and media upload."},
+        {
+            "name": "movies",
+            "description": "Movie catalog, ratings, votes, comments and favorites.",
+        },
+        {"name": "genres", "description": "Genre management and analytics."},
+        {"name": "stars", "description": "Movie stars management."},
+        {"name": "directors", "description": "Movie directors management."},
+    ],
     lifespan=lifespan,
 )
 

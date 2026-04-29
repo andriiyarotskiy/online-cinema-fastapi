@@ -14,7 +14,14 @@ router = APIRouter()
 @router.post(
     "/",
     response_model=GenreResponseSchema,
+    summary="Create genre",
+    description="Creates new movie genre. Available for moderators/admins.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"description": "Genre with this name already exists."},
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can create genres."},
+    },
 )
 async def create_genre(
     genre: GenreRequestSchema,
@@ -39,6 +46,8 @@ async def create_genre(
 @router.get(
     "/",
     response_model=list[GenreResponseSchema],
+    summary="List genres",
+    description="Returns all genres ordered by newest first.",
     status_code=status.HTTP_200_OK,
 )
 async def get_genres(db: AsyncSessionDep) -> list[GenreModel]:
@@ -49,7 +58,16 @@ async def get_genres(db: AsyncSessionDep) -> list[GenreModel]:
 
 
 @router.put(
-    "/{genre_id}/", response_model=GenreResponseSchema, status_code=status.HTTP_200_OK
+    "/{genre_id}/",
+    response_model=GenreResponseSchema,
+    summary="Update genre",
+    description="Updates genre by id. Available for moderators/admins.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can update genres."},
+        404: {"description": "Genre not found."},
+    },
 )
 async def update_genre(
     genre_id: int,
@@ -70,7 +88,16 @@ async def update_genre(
     return GenreResponseSchema.model_validate(genre)
 
 
-@router.delete("/")
+@router.delete(
+    "/",
+    summary="Delete genres",
+    description="Bulk deletes genres by ids. Available for moderators/admins.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can delete genres."},
+        422: {"description": "Invalid ids payload."},
+    },
+)
 async def delete_genres(
     ids: PositiveIntList,
     db: AsyncSessionDep,
@@ -84,6 +111,8 @@ async def delete_genres(
 @router.get(
     "/stats/",
     response_model=list[GenreWithCountResponseSchema],
+    summary="Genres statistics",
+    description="Returns genres with number of related movies.",
     status_code=status.HTTP_200_OK,
 )
 async def genres_with_movie_counts(

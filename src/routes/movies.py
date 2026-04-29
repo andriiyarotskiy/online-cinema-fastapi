@@ -52,7 +52,15 @@ router = APIRouter()
 @router.post(
     "/movies/",
     response_model=MovieDetailResponseSchema,
+    summary="Create movie",
+    description="Creates a new movie entry. Available only for moderators and admins.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can create movies."},
+        404: {"description": "Certification/genre/star/director was not found."},
+        409: {"description": "Movie with same name/year/time already exists."},
+    },
 )
 async def create_movie(
     movie_data: MovieCreateSchema,
@@ -94,7 +102,11 @@ async def create_movie(
 
 
 @router.get(
-    "/movies/", response_model=MovieListResponseSchema, status_code=status.HTTP_200_OK
+    "/movies/",
+    response_model=MovieListResponseSchema,
+    summary="List movies",
+    description="Returns paginated movie catalog with filtering and sorting support.",
+    status_code=status.HTTP_200_OK,
 )
 async def get_movies(
     db: AsyncSessionDep,
@@ -109,7 +121,10 @@ async def get_movies(
 @router.get(
     "/movies/{movie_id}/",
     response_model=MovieDetailResponseSchema,
+    summary="Get movie details",
+    description="Returns full details for a single movie by id.",
     status_code=status.HTTP_200_OK,
+    responses={404: {"description": "Movie not found."}},
 )
 async def get_movie_detail(
     movie_id: int, db: AsyncSessionDep
@@ -121,7 +136,15 @@ async def get_movie_detail(
 @router.put(
     "/movies/{movie_id}/",
     response_model=MovieDetailResponseSchema,
+    summary="Update movie",
+    description="Updates movie fields and related entities. Available for moderators/admins.",
     status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can update movies."},
+        404: {"description": "Movie or certification/related entities not found."},
+        409: {"description": "Movie uniqueness conflict."},
+    },
 )
 async def update_movie(
     movie_id: int,
@@ -170,7 +193,17 @@ async def update_movie(
     return MovieDetailResponseSchema.model_validate(movie)
 
 
-@router.delete("/movies/{movie_id}/", response_model=MessageResponseSchema)
+@router.delete(
+    "/movies/{movie_id}/",
+    response_model=MessageResponseSchema,
+    summary="Delete movie",
+    description="Deletes a movie by id. Available for moderators/admins.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can delete movies."},
+        404: {"description": "Movie not found."},
+    },
+)
 async def delete_movie(
     movie_id: int,
     db: AsyncSessionDep,
@@ -184,7 +217,16 @@ async def delete_movie(
     return MessageResponseSchema(message="Movie deleted successfully.")
 
 
-@router.post("/movies/{movie_id}/vote/", response_model=MessageResponseSchema)
+@router.post(
+    "/movies/{movie_id}/vote/",
+    response_model=MessageResponseSchema,
+    summary="Vote for movie",
+    description="Creates, updates or resets current user like/dislike vote for a movie.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Movie not found or vote not found for reset."},
+    },
+)
 async def vote_movie(
     movie_id: int,
     vote_data: MovieVoteRequestSchema,
@@ -218,7 +260,17 @@ async def vote_movie(
     return MessageResponseSchema(message=message)
 
 
-@router.post("/movies/{movie_id}/rate/", response_model=MessageResponseSchema)
+@router.post(
+    "/movies/{movie_id}/rate/",
+    response_model=MessageResponseSchema,
+    summary="Rate movie",
+    description="Creates or updates current user rating for a movie (1-10).",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Movie not found."},
+        422: {"description": "Rating validation failed."},
+    },
+)
 async def rate_movie(
     movie_id: int,
     rating_data: MovieRatingRequestSchema,
@@ -242,7 +294,16 @@ async def rate_movie(
     return MessageResponseSchema(message="Movie rating saved successfully.")
 
 
-@router.post("/favorites/movies/{movie_id}/", response_model=MessageResponseSchema)
+@router.post(
+    "/favorites/movies/{movie_id}/",
+    response_model=MessageResponseSchema,
+    summary="Add movie to favorites",
+    description="Adds selected movie to current user favorites.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Movie not found."},
+    },
+)
 async def add_movie_to_favorites(
     movie_id: int,
     db: AsyncSessionDep,
@@ -262,7 +323,16 @@ async def add_movie_to_favorites(
     return MessageResponseSchema(message="Movie added to favorites.")
 
 
-@router.delete("/favorites/movies/{movie_id}/", response_model=MessageResponseSchema)
+@router.delete(
+    "/favorites/movies/{movie_id}/",
+    response_model=MessageResponseSchema,
+    summary="Remove movie from favorites",
+    description="Removes selected movie from current user favorites.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Movie is not in favorites."},
+    },
+)
 async def remove_movie_from_favorites(
     movie_id: int,
     db: AsyncSessionDep,
@@ -283,7 +353,10 @@ async def remove_movie_from_favorites(
 @router.get(
     "/favorites/movies/",
     response_model=MovieListResponseSchema,
+    summary="List favorite movies",
+    description="Returns paginated list of current user favorite movies.",
     status_code=status.HTTP_200_OK,
+    responses={401: {"description": "Missing or invalid authentication token."}},
 )
 async def get_favorite_movies(
     db: AsyncSessionDep,
@@ -304,7 +377,13 @@ async def get_favorite_movies(
 @router.post(
     "/movies/{movie_id}/comments/",
     response_model=MovieCommentResponseSchema,
+    summary="Create movie comment",
+    description="Creates a new comment for a movie. Supports nested comments via parent id.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Movie or parent comment not found."},
+    },
 )
 async def create_comment(
     movie_id: int,
@@ -360,7 +439,10 @@ async def create_comment(
 @router.get(
     "/movies/{movie_id}/comments/",
     response_model=list[MovieCommentResponseSchema],
+    summary="List movie comments",
+    description="Returns comments for selected movie ordered by latest first.",
     status_code=status.HTTP_200_OK,
+    responses={404: {"description": "Movie not found."}},
 )
 async def get_movie_comments(
     movie_id: int, db: AsyncSessionDep
@@ -381,7 +463,14 @@ async def get_movie_comments(
 @router.post(
     "/movies/{movie_id}/comments/{comment_id}/reply/",
     response_model=MovieCommentResponseSchema,
+    summary="Reply to comment",
+    description="Creates reply for selected comment and enforces parent id consistency.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"description": "Body parent_comment_id does not match path comment_id."},
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Movie or parent comment not found."},
+    },
 )
 async def reply_to_comment(
     movie_id: int,
@@ -415,6 +504,12 @@ async def reply_to_comment(
 @router.post(
     "/movies/{movie_id}/comments/{comment_id}/like/",
     response_model=MessageResponseSchema,
+    summary="Like comment",
+    description="Adds like to a comment from current user and creates notification.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        404: {"description": "Comment not found."},
+    },
 )
 async def like_comment(
     movie_id: int,
@@ -471,7 +566,10 @@ async def like_comment(
 @router.get(
     "/movies/comments/notifications/",
     response_model=list[MovieCommentNotificationResponseSchema],
+    summary="List comment notifications",
+    description="Returns comment notifications for current authenticated user.",
     status_code=status.HTTP_200_OK,
+    responses={401: {"description": "Missing or invalid authentication token."}},
 )
 async def get_comment_notifications(
     db: AsyncSessionDep,

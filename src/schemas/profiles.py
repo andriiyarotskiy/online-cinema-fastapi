@@ -1,7 +1,7 @@
 from datetime import date
 
 from fastapi import UploadFile, Form, File, HTTPException
-from pydantic import BaseModel, field_validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 
 from validation import (
     validate_name,
@@ -12,12 +12,12 @@ from validation import (
 
 
 class ProfileCreateSchema(BaseModel):
-    first_name: str
-    last_name: str
-    gender: str
-    date_of_birth: date
-    info: str
-    avatar: UploadFile
+    first_name: str = Field(..., description="User first name.")
+    last_name: str = Field(..., description="User last name.")
+    gender: str = Field(..., description="Gender value validated by business rules.")
+    date_of_birth: date = Field(..., description="Date of birth in ISO format.")
+    info: str = Field(..., description="Short biography or profile info.")
+    avatar: UploadFile = Field(..., description="Avatar image file.")
 
     @classmethod
     def from_form(
@@ -134,11 +134,11 @@ class ProfileCreateSchema(BaseModel):
 
 
 class ProfileResponseSchema(BaseModel):
-    id: int
-    user_id: int
-    first_name: str
-    last_name: str
-    gender: str
-    date_of_birth: date
-    info: str
-    avatar: HttpUrl
+    id: int = Field(..., description="Profile ID.")
+    user_id: int = Field(..., description="Owner user ID.")
+    first_name: str = Field(..., description="User first name.")
+    last_name: str = Field(..., description="User last name.")
+    gender: str = Field(..., description="Profile gender.")
+    date_of_birth: date = Field(..., description="Date of birth.")
+    info: str = Field(..., description="Profile biography.")
+    avatar: HttpUrl = Field(..., description="Public URL to avatar image.")
