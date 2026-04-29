@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import and_, delete, select
+from sqlalchemy.orm import joinedload
 
+from config.dependencies import get_accounts_email_notificator
 from database import (
     AsyncSessionDep,
     CertificationModel,
@@ -16,6 +18,7 @@ from database import (
     MovieVoteModel,
     UserModel,
 )
+from notifications import EmailSenderInterface
 from database.utils import commit_or_500
 from schemas.accounts import MessageResponseSchema
 from schemas.movies import (
@@ -308,6 +311,7 @@ async def create_comment(
     payload: MovieCommentCreateRequestSchema,
     db: AsyncSessionDep,
     user: CurrentUserDep,
+    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MovieCommentResponseSchema:
     await _get_movie_or_404(db, movie_id)
     parent_comment = None
@@ -328,7 +332,12 @@ async def create_comment(
     )
     db.add(comment)
     await db.flush()
+    recipient_email: str | None = None
     if parent_comment and parent_comment.user_id != user.id:
+        recipient = await db.scalar(
+            select(UserModel).where(UserModel.id == parent_comment.user_id)
+        )
+        recipient_email = recipient.email if recipient else None
         db.add(
             MovieCommentNotificationModel(
                 recipient_user_id=parent_comment.user_id,
@@ -338,6 +347,13 @@ async def create_comment(
             )
         )
     await commit_or_500(db, comment)
+    if recipient_email:
+        await email_sender.send_comment_reply_email(
+            recipient_email=recipient_email,
+            sender_email=user.email,
+            movie_id=movie_id,
+            comment_id=comment.id,
+        )
     return MovieCommentResponseSchema.model_validate(comment)
 
 
@@ -371,9 +387,12 @@ async def like_comment(
     comment_id: int,
     db: AsyncSessionDep,
     user: CurrentUserDep,
+    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
     comment = await db.scalar(
-        select(MovieCommentModel).where(
+        select(MovieCommentModel)
+        .options(joinedload(MovieCommentModel.movie))
+        .where(
             MovieCommentModel.id == comment_id, MovieCommentModel.movie_id == movie_id
         )
     )
@@ -388,7 +407,12 @@ async def like_comment(
     if like:
         return MessageResponseSchema(message="Comment already liked.")
     db.add(MovieCommentLikeModel(comment_id=comment_id, user_id=user.id))
+    recipient_email: str | None = None
     if comment.user_id != user.id:
+        recipient = await db.scalar(
+            select(UserModel).where(UserModel.id == comment.user_id)
+        )
+        recipient_email = recipient.email if recipient else None
         db.add(
             MovieCommentNotificationModel(
                 recipient_user_id=comment.user_id,
@@ -400,6 +424,13 @@ async def like_comment(
             )
         )
     await commit_or_500(db)
+    if recipient_email:
+        await email_sender.send_comment_like_email(
+            recipient_email=recipient_email,
+            sender_email=user.email,
+            movie_name=comment.movie.name,
+            comment_content=comment.content,
+        )
     return MessageResponseSchema(message="Comment liked successfully.")
 
 
