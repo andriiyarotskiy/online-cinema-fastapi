@@ -1,28 +1,18 @@
-from fastapi import Request, HTTPException, status
+from fastapi import HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_token(request: Request) -> str:
+def get_token(
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+) -> str:
     """
     Extracts the Bearer token from the Authorization header.
-
-    :param request: FastAPI Request object.
-    :return: Extracted token string.
-    :raises HTTPException: If Authorization header is missing or invalid.
     """
-    authorization: str = request.headers.get("Authorization")
-
-    if not authorization:
+    if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header is missing",
         )
-
-    scheme, _, token = authorization.partition(" ")
-
-    if scheme.lower() != "bearer" or not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
-        )
-
-    return token
+    return credentials.credentials

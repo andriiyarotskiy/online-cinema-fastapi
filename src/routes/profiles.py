@@ -27,7 +27,18 @@ router = APIRouter()
     "/users/{user_id}/profile/",
     response_model=ProfileResponseSchema,
     summary="Create user profile",
+    description=(
+        "Creates a profile for a user with avatar upload. "
+        "User can create only own profile, while moderators/admins can create for others."
+    ),
     status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"description": "Profile already exists for user."},
+        401: {"description": "Missing or invalid token, or inactive user."},
+        403: {"description": "Insufficient permissions to create profile."},
+        422: {"description": "Validation error in form fields or file."},
+        500: {"description": "Avatar upload/storage failure."},
+    },
 )
 async def create_profile(
     user_id: int,

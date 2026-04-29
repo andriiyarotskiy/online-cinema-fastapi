@@ -16,7 +16,13 @@ router = APIRouter()
 @router.post(
     "/",
     response_model=DirectorResponseSchema,
+    summary="Create director",
+    description="Creates movie director. Intended for moderators/admins.",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"description": "Director with this name already exists."},
+        401: {"description": "Missing or invalid authentication token."},
+    },
 )
 async def create_director(
     director: DirectorRequestSchema,
@@ -39,6 +45,8 @@ async def create_director(
 @router.get(
     "/",
     response_model=list[DirectorResponseSchema],
+    summary="List directors",
+    description="Returns all directors ordered alphabetically.",
     status_code=status.HTTP_200_OK,
 )
 async def get_directors(db: AsyncSessionDep) -> list[DirectorResponseSchema]:
@@ -53,7 +61,14 @@ async def get_directors(db: AsyncSessionDep) -> list[DirectorResponseSchema]:
 @router.put(
     "/{director_id}/",
     response_model=DirectorResponseSchema,
+    summary="Update director",
+    description="Updates director by id. Available for moderators/admins.",
     status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can update directors."},
+        404: {"description": "Director not found."},
+    },
 )
 async def update_director(
     director_id: int,
@@ -71,7 +86,16 @@ async def update_director(
     return DirectorResponseSchema.model_validate(director)
 
 
-@router.delete("/")
+@router.delete(
+    "/",
+    summary="Delete directors",
+    description="Bulk deletes directors by ids. Available for moderators/admins.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can delete directors."},
+        422: {"description": "Invalid ids payload."},
+    },
+)
 async def delete_directors(
     ids: PositiveIntList,
     db: AsyncSessionDep,

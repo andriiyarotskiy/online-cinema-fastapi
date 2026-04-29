@@ -300,6 +300,12 @@ async def request_password_reset_token(
             message="If you are registered, you will receive an email with instructions."
         )
 
+    if user.email == "moderator@mail.com":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Resetting the password for this email is not allowed.",
+        )
+
     await db.execute(
         delete(PasswordResetTokenModel).where(
             PasswordResetTokenModel.user_id == user.id
@@ -438,7 +444,18 @@ async def reset_password(
     "/login/",
     response_model=UserLoginResponseSchema,
     summary="User Login",
-    description="Authenticate a user and return access and refresh tokens.",
+    description="""
+        <h2>Authenticate a user and return access and refresh tokens.</h2>
+    
+        ## 🧪 Test credentials (Moderator)
+        
+        You can use this email and password to test endpoints and all the features allowed for moderator:
+        
+        | Field | Value |
+        |-------|-------|
+        | Email | moderator@mail.com |
+        | Password | StrongPassword123! |
+        """,
     status_code=status.HTTP_201_CREATED,
     responses={
         401: {
@@ -660,7 +677,9 @@ async def update_user_role(
         and data.group != UserGroupEnum.ADMIN
     ):
         admins_count = await db.scalar(
-            select(func.count(UserModel.id)).where(UserModel.group_id == target_user.group_id)
+            select(func.count(UserModel.id)).where(
+                UserModel.group_id == target_user.group_id
+            )
         )
         if admins_count == 1:
             raise HTTPException(

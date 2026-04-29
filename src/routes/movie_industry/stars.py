@@ -10,7 +10,16 @@ router = APIRouter()
 
 
 @router.post(
-    "/", response_model=StarResponseSchema, status_code=status.HTTP_201_CREATED
+    "/",
+    response_model=StarResponseSchema,
+    summary="Create star",
+    description="Creates movie star. Available for moderators/admins.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"description": "Star with this name already exists."},
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can create stars."},
+    },
 )
 async def create_star(
     star: StarRequestSchema,
@@ -29,7 +38,11 @@ async def create_star(
 
 
 @router.get(
-    "/", response_model=list[StarResponseSchema], status_code=status.HTTP_200_OK
+    "/",
+    response_model=list[StarResponseSchema],
+    summary="List stars",
+    description="Returns all stars ordered alphabetically.",
+    status_code=status.HTTP_200_OK,
 )
 async def get_stars(db: AsyncSessionDep) -> list[StarResponseSchema]:
     stars = list(
@@ -41,7 +54,14 @@ async def get_stars(db: AsyncSessionDep) -> list[StarResponseSchema]:
 @router.put(
     "/{star_id}/",
     response_model=StarResponseSchema,
+    summary="Update star",
+    description="Updates star by id. Available for moderators/admins.",
     status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can update stars."},
+        404: {"description": "Star not found."},
+    },
 )
 async def update_star(
     star_id: int,
@@ -57,7 +77,16 @@ async def update_star(
     return StarResponseSchema.model_validate(star)
 
 
-@router.delete("/")
+@router.delete(
+    "/",
+    summary="Delete stars",
+    description="Bulk deletes stars by ids. Available for moderators/admins.",
+    responses={
+        401: {"description": "Missing or invalid authentication token."},
+        403: {"description": "Only moderator/admin can delete stars."},
+        422: {"description": "Invalid ids payload."},
+    },
+)
 async def delete_stars(
     ids: PositiveIntList,
     db: AsyncSessionDep,
