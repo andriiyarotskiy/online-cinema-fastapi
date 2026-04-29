@@ -379,6 +379,40 @@ async def get_movie_comments(
 
 
 @router.post(
+    "/movies/{movie_id}/comments/{comment_id}/reply/",
+    response_model=MovieCommentResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+async def reply_to_comment(
+    movie_id: int,
+    comment_id: int,
+    payload: MovieCommentCreateRequestSchema,
+    db: AsyncSessionDep,
+    user: CurrentUserDep,
+    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
+) -> MovieCommentResponseSchema:
+    if (
+        payload.parent_comment_id is not None
+        and payload.parent_comment_id != comment_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="parent_comment_id in body must match comment_id from path.",
+        )
+
+    return await create_comment(
+        movie_id=movie_id,
+        payload=MovieCommentCreateRequestSchema(
+            content=payload.content,
+            parent_comment_id=comment_id,
+        ),
+        db=db,
+        user=user,
+        email_sender=email_sender,
+    )
+
+
+@router.post(
     "/movies/{movie_id}/comments/{comment_id}/like/",
     response_model=MessageResponseSchema,
 )
