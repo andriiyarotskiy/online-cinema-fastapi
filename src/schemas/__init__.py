@@ -9,6 +9,7 @@ from schemas.accounts import (
     MessageResponseSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
+    UserRoleUpdateRequestSchema,
 )
 
 from schemas.movies import (

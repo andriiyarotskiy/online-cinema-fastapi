@@ -1,5 +1,10 @@
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+
 from fastapi import FastAPI
 
+from database.bootstrap import bootstrap_auth_data
+from database.session_postgresql import AsyncPostgresqlSessionLocal
 from routes import (
     accounts_router,
     profiles_router,
@@ -9,9 +14,19 @@ from routes import (
     directors_router,
 )
 
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    async with AsyncPostgresqlSessionLocal() as session:
+        await bootstrap_auth_data(session=session)
+        await session.commit()
+    yield
+
+
 app = FastAPI(
     title="Online Cinema",
     description="Modern and user-friendly API for Online Cinema project",
+    lifespan=lifespan,
 )
 
 app.include_router(accounts_router, prefix="/accounts", tags=["accounts"])

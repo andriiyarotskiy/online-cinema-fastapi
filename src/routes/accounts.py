@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import cast
 
 from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -36,8 +36,10 @@ from schemas import (
     MessageResponseSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
+    UserRoleUpdateRequestSchema,
 )
 from security.interfaces import JWTAuthManagerInterface
+from security.permissions import AdminDep
 
 router = APIRouter()
 
@@ -615,3 +617,58 @@ async def refresh_access_token(
     new_access_token = jwt_manager.create_access_token({"user_id": user_id})
 
     return TokenRefreshResponseSchema(access_token=new_access_token)
+
+
+@router.patch(
+    "/users/{user_id}/role/",
+    response_model=MessageResponseSchema,
+    summary="Change user role",
+    description="Allows only admin to change a user's role.",
+    status_code=status.HTTP_200_OK,
+)
+async def update_user_role(
+    user_id: int,
+    data: UserRoleUpdateRequestSchema,
+    _: AdminDep,
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponseSchema:
+    target_user = await db.scalar(select(UserModel).where(UserModel.id == user_id))
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    target_group = await db.scalar(
+        select(UserGroupModel).where(UserGroupModel.name == data.group)
+    )
+    if not target_group:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Requested role does not exist.",
+        )
+
+    if target_user.group_id == target_group.id:
+        return MessageResponseSchema(message="User already has this role.")
+
+    current_group = await db.scalar(
+        select(UserGroupModel).where(UserGroupModel.id == target_user.group_id)
+    )
+    if (
+        current_group
+        and current_group.name == UserGroupEnum.ADMIN
+        and data.group != UserGroupEnum.ADMIN
+    ):
+        admins_count = await db.scalar(
+            select(func.count(UserModel.id)).where(UserModel.group_id == target_user.group_id)
+        )
+        if admins_count == 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot demote the last admin user.",
+            )
+
+    target_user.group_id = target_group.id
+    await db.commit()
+
+    return MessageResponseSchema(message="User role updated successfully.")
