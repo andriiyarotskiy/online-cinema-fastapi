@@ -43,14 +43,9 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
-      - name: Run Black (format check)
+      - name: Run Black (check only)
         run: |
           poetry run black --check src
-
-      - name: Run type check (optional, if you add mypy later)
-        if: false
-        run: |
-          poetry run mypy src
 
       - name: Verify project builds
         run: |
