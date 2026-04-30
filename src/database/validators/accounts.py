@@ -17,17 +17,6 @@ def validate_password_strength(password: str) -> str:
             "Password must contain at least one special character: @, $, !, %, *, ?, #, &."
         )
 
-
-
-
-
-
-
-
-
-
-
-
     return password
 
 
