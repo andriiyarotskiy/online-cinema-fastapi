@@ -1,14 +1,14 @@
 services:
   db:
     image: 'postgres:16'
-    container_name: online_cinema
+    container_name: postgres_theater
     env_file:
-      - .env.dev
+      - .env
     ports:
       - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - online_cinema_data:/var/lib/postgresql/data/
+      - postgres_theater_data:/var/lib/postgresql/data/
     networks:
       - cinema_network
     healthcheck:
@@ -20,16 +20,16 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin_cinema
+    container_name: pgadmin_theater
     ports:
       - "3333:80"
     env_file:
-      - .env.dev
+      - .env
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - pgadmin_cinema_data:/var/lib/pgadmin
+      - pgadmin_theater_data:/var/lib/pgadmin
     networks:
       - cinema_network
 
@@ -37,9 +37,9 @@ services:
     restart: always
     build: .
     container_name: backend_cinema
-    command: [ "/bin/bash", "/commands/run_web_server_dev.sh" ]
+    command: [ "/bin/bash", "/commands/run_web_server_prod.sh" ]
     env_file:
-      - .env.dev
+      - .env
     environment:
       - LOG_LEVEL=debug
       - PYTHONPATH=/app/src/cinema
@@ -56,20 +56,69 @@ services:
     networks:
       - cinema_network
 
+  migrator:
+    build: .
+    container_name: alembic_migrator_theater
+    command: ["/bin/bash", "/commands/run_migration.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src/cinema
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/src/cinema
+    networks:
+      - cinema_network
+
   mailhog:
     restart: always
     build:
       context: .
       dockerfile: ./docker/mailhog/Dockerfile
     container_name: mailhog_cinema
-    command: [ "/bin/bash", "-c", "/commands/setup_mailhog_auth.sh && /go/bin/MailHog" ]
+    command: ["/bin/bash", "-c", "/commands/setup_mailhog_auth.sh && /go/bin/MailHog"]
     ports:
       - "8025:8025"
       - "1025:1025"
     env_file:
-      - .env.dev
+      - .env
     environment:
       MH_AUTH_FILE: /mailhog.auth
+    networks:
+      - cinema_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio-cinema
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - .env
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cinema_network
+
+  minio_mc:
+    build:
+      context: .
+      dockerfile: docker/minio_mc/Dockerfile
+    container_name: minio_mc_cinema
+    command: ["/bin/sh", "-c", "/commands/setup_minio.sh"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file:
+      - .env
     networks:
       - cinema_network
 
@@ -86,7 +135,7 @@ services:
     container_name: celery_worker_cinema
     command: celery -A services.celery_service.celery_config.celery_instance worker --loglevel=INFO
     env_file:
-      - .env.dev
+      - .env
     environment:
       - PYTHONPATH=/app/src/cinema
     depends_on:
@@ -104,7 +153,7 @@ services:
     container_name: celery_beat_cinema
     command: celery -A services.celery_service.celery_config.celery_instance beat --loglevel=INFO
     env_file:
-      - .env.dev
+      - .env
     environment:
       - PYTHONPATH=/app/src/cinema
     depends_on:
@@ -117,43 +166,27 @@ services:
     networks:
       - cinema_network
 
-  minio:
-    image: minio/minio:latest
-    container_name: minio-cinema
-    command: server --console-address ":9001" /data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    env_file:
-      - .env.dev
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - cinema_network
-
-  minio_mc:
+  nginx:
     build:
       context: .
-      dockerfile: docker/minio_mc/Dockerfile
-    container_name: minio_mc_cinema
-    command: [ "/bin/sh", "-c", "/commands/setup_minio.sh" ]
+      dockerfile: docker/nginx/Dockerfile
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      minio:
-        condition: service_healthy
+      - web
     env_file:
-      - .env.dev
+      - ./docker/nginx/.env
     networks:
       - cinema_network
 
 volumes:
-  online_cinema_data:
+  postgres_theater_data:
     driver: local
-  pgadmin_cinema_data:
+  pgadmin_theater_data:
     driver: local
   minio_data:
     driver: local

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # SQLAlchemy migrate
-ALEMBIC_CONFIG="/usr/src/alembic/alembic.ini"
-MIGRATIONS_DIR="/usr/src/fastapi/database/migrations/versions"
+ALEMBIC_CONFIG="/app/src/alembic/alembic.ini"
+MIGRATIONS_DIR="/app/src/cinema/database/migrations/versions"
 
 echo "Checking for changes before generating a migration..."
 

@@ -2,7 +2,7 @@ FROM alpine:latest
 
 RUN apk add --no-cache curl dos2unix minio-client
 
-RUN ln -s /usr/bin/mcli /usr/bin/mc
+RUN ln -s /app/bin/mcli /usr/bin/mc
 
 COPY ./commands/setup_minio.sh /commands/setup_minio.sh
 
