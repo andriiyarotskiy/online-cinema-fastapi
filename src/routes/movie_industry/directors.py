@@ -27,7 +27,7 @@ router = APIRouter()
 async def create_director(
     director: DirectorRequestSchema,
     db: AsyncSessionDep,
-    # _: ModeratorDep,
+    _: ModeratorDep,
 ) -> DirectorResponseSchema:
     exists = await db.scalar(
         select(DirectorModel).where(DirectorModel.name == director.name)
