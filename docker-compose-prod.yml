@@ -1,6 +1,6 @@
 services:
   db:
-    image: 'postgres:16'
+    image: 'postgres:16-alpine'
     container_name: postgres_theater
     env_file:
       - .env
@@ -17,6 +17,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 150M
 
   web:
     restart: always
@@ -26,9 +30,8 @@ services:
     env_file:
       - .env
     environment:
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=info
       - PYTHONPATH=/app/src/cinema
-      - WATCHFILES_FORCE_POLLING=true
     ports:
       - "8000:8000"
     depends_on:
@@ -73,8 +76,13 @@ services:
       - cinema_network
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: redis_cinema
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     ports:
       - "6379:6379"
     networks:
@@ -83,7 +91,11 @@ services:
   celery_worker:
     build: .
     container_name: celery_worker_cinema
-    command: celery -A services.celery_service.celery_config.celery_instance worker --loglevel=INFO
+    command: celery -A services.celery_service.celery_config.celery_instance worker --loglevel=ERROR --concurrency=1 -P solo
+    deploy:
+      resources:
+        limits:
+          memory: 100M
     env_file:
       - .env
     environment:
@@ -101,7 +113,11 @@ services:
   celery_beat:
     build: .
     container_name: celery_beat_cinema
-    command: celery -A services.celery_service.celery_config.celery_instance beat --loglevel=INFO
+    command: celery -A services.celery_service.celery_config.celery_instance beat --loglevel=ERROR
+    deploy:
+      resources:
+        limits:
+          memory: 80M
     env_file:
       - .env
     environment:
