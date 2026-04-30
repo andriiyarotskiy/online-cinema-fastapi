@@ -31,14 +31,12 @@ services:
       - .env
     environment:
       - LOG_LEVEL=info
-      - PYTHONPATH=/app/src/cinema
+      - PYTHONPATH=/app/src
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./src:/app/src/cinema
     networks:
       - cinema_network
 
@@ -49,12 +47,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./src:/app/src/cinema
     env_file:
       - .env
     environment:
-      - PYTHONPATH=/app/src/cinema
+      - PYTHONPATH=/app/src
     networks:
       - cinema_network
 
@@ -75,62 +71,62 @@ services:
     networks:
       - cinema_network
 
-#  redis:
-#    image: redis:7-alpine
-#    container_name: redis_cinema
-#    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 64M
-#    ports:
-#      - "6379:6379"
-#    networks:
-#      - cinema_network
-#
-#  celery_worker:
-#    build: .
-#    container_name: celery_worker_cinema
-#    command: celery -A services.celery_service.celery_config.celery_instance worker --loglevel=ERROR --concurrency=1 -P solo
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 100M
-#    env_file:
-#      - .env
-#    environment:
-#      - PYTHONPATH=/app/src/cinema
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#      redis:
-#        condition: service_started
-#    volumes:
-#      - ./src:/app/src/cinema
-#    networks:
-#      - cinema_network
-#
-#  celery_beat:
-#    build: .
-#    container_name: celery_beat_cinema
-#    command: celery -A services.celery_service.celery_config.celery_instance beat --loglevel=ERROR
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 80M
-#    env_file:
-#      - .env
-#    environment:
-#      - PYTHONPATH=/app/src/cinema
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#      redis:
-#        condition: service_started
-#    volumes:
-#      - ./src:/app/src/cinema
-#    networks:
-#      - cinema_network
+  #  redis:
+  #    image: redis:7-alpine
+  #    container_name: redis_cinema
+  #    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
+  #    deploy:
+  #      resources:
+  #        limits:
+  #          memory: 64M
+  #    ports:
+  #      - "6379:6379"
+  #    networks:
+  #      - cinema_network
+  #
+  #  celery_worker:
+  #    build: .
+  #    container_name: celery_worker_cinema
+  #    command: celery -A services.celery_service.celery_config.celery_instance worker --loglevel=ERROR --concurrency=1 -P solo
+  #    deploy:
+  #      resources:
+  #        limits:
+  #          memory: 100M
+  #    env_file:
+  #      - .env
+  #    environment:
+  #      - PYTHONPATH=/app/src/cinema
+  #    depends_on:
+  #      db:
+  #        condition: service_healthy
+  #      redis:
+  #        condition: service_started
+  #    volumes:
+  #      - ./src:/app/src/cinema
+  #    networks:
+  #      - cinema_network
+  #
+  #  celery_beat:
+  #    build: .
+  #    container_name: celery_beat_cinema
+  #    command: celery -A services.celery_service.celery_config.celery_instance beat --loglevel=ERROR
+  #    deploy:
+  #      resources:
+  #        limits:
+  #          memory: 80M
+  #    env_file:
+  #      - .env
+  #    environment:
+  #      - PYTHONPATH=/app/src/cinema
+  #    depends_on:
+  #      db:
+  #        condition: service_healthy
+  #      redis:
+  #        condition: service_started
+  #    volumes:
+  #      - ./src:/app/src/cinema
+  #    networks:
+  #      - cinema_network
 
   nginx:
     build:
