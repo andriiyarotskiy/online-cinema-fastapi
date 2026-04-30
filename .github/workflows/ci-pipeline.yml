@@ -13,9 +13,14 @@ jobs:
     name: Run CI checks
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,14 +48,19 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
-      - name: Run Black (format check)
+      - name: Run Black (auto-fix)
         run: |
-          poetry run black --check src
+          poetry run black src
 
-      - name: Run type check (optional, if you add mypy later)
-        if: false
+      - name: Commit formatting changes if needed
         run: |
-          poetry run mypy src
+          if ! git diff --quiet; then
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git add .
+            git commit -m "Apply Black formatting"
+            git push
+          fi
 
       - name: Verify project builds
         run: |
