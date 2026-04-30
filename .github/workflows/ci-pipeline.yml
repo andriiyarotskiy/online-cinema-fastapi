@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write   # дозволяє пушити назад у PR
 
     steps:
       - name: Checkout code
@@ -52,15 +52,11 @@ jobs:
         run: |
           poetry run black src
 
-      - name: Commit formatting changes if needed
-        run: |
-          if ! git diff --quiet; then
-            git config --global user.name "github-actions"
-            git config --global user.email "github-actions@github.com"
-            git add .
-            git commit -m "Apply Black formatting"
-            git push
-          fi
+      - name: Commit formatting changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Apply Black formatting"
+          branch: ${{ github.head_ref }}
 
       - name: Verify project builds
         run: |
