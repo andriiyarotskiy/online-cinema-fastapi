@@ -13,14 +13,9 @@ jobs:
     name: Run CI checks
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write   # дозволяє пушити назад у PR
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,15 +43,9 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
-      - name: Run Black (auto-fix)
+      - name: Run Black (check only)
         run: |
-          poetry run black src
-
-      - name: Commit formatting changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Apply Black formatting"
-          branch: ${{ github.head_ref }}
+          poetry run black --check src
 
       - name: Verify project builds
         run: |
