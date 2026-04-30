@@ -1,4 +1,7 @@
 #!/bin/sh
 
+# Run migrations
+alembic -c /app/src/alembic/alembic.ini upgrade head
+
 # Run web server
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src/cinema
