@@ -4,6 +4,35 @@ A production-ready REST API for an online cinema platform built with **FastAPI**
 
 ---
 
+## 🌐 Live Demo
+
+| Resource | URL |
+|---|---|
+| API (Swagger UI) | http://15.216.207.59/docs |
+| Email service (MailHog) | http://15.216.207.59:8025 |
+
+---
+
+### Accessing the API docs
+
+Swagger UI is protected by HTTP Basic Auth:
+
+```
+Username: admin
+Password: Awk78Jwamsh12
+```
+
+### Test account (Moderator)
+
+```
+Email:    moderator@mail.com
+Password: StrongPassword123!
+```
+
+Login via `POST /accounts/login/` to receive JWT tokens, then use the `access_token` as a Bearer token in the `Authorization` header.
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -58,33 +87,6 @@ The API will be available at `http://127.0.0.1:8000/docs/`.
 
 ---
 
-## 🌐 Live Demo
-
-| Resource | URL |
-|---|---|
-| API (Swagger UI) | http://15.216.207.59/docs |
-| Email service (MailHog) | http://15.216.207.59:8025 |
-
-### Accessing the API docs
-
-Swagger UI is protected by HTTP Basic Auth:
-
-```
-Username: admin
-Password: Awk78Jwamsh12
-```
-
-### Test account (Moderator)
-
-```
-Email:    moderator@mail.com
-Password: StrongPassword123!
-```
-
-Login via `POST /accounts/login/` to receive JWT tokens, then use the `access_token` as a Bearer token in the `Authorization` header.
-
----
-
 ## 🧱 Tech Stack
 
 | Layer | Technology |
@@ -127,14 +129,14 @@ Login via `POST /accounts/login/` to receive JWT tokens, then use the `access_to
 - Comment notifications
 
 ### Catalog Entities
-- Genres — CRUD + usage statistics
+- Genres — CRUD
 - Stars (actors) — CRUD
 - Directors — CRUD
 
 ### Infrastructure
 - Fully containerized via Docker Compose
 - Poetry-managed dependencies (`pyproject.toml`)
-- GitHub Actions CI: linting (flake8/black), type checks (mypy), tests (pytest)
+- GitHub Actions CI: linting (flake8/black)
 - Automatic deployment to AWS EC2 on merge to main
 - Swagger/OpenAPI docs with HTTP Basic Auth protection
 
